@@ -29,4 +29,3 @@ jobs:
       - name: Run tests
         if: ${{ hashFiles('tests/**/*.py') != '' }}
         run: pytest
-```0
