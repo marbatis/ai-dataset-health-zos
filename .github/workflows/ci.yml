@@ -1,31 +1,26 @@
-name: CI
+Repository: marbatis/ai-dataset-health-zos
+Mode: code
+Branch: codex/understand-repo-purpose-and-goals   # the PR #9 branch
 
-on:
-  pull_request:
-  push:
+Task:
+Fix CI on PR #9 by upgrading the artifact action.
 
-jobs:
-  lint-test:
-    runs-on: ubuntu-latest
+Steps:
+1) Edit .github/workflows/ci.yml
+   - Change:
+       uses: actions/upload-artifact@v3
+     to:
+       uses: actions/upload-artifact@v4
+   - Do not change any other steps.
 
-    steps:
-      - uses: actions/checkout@v3
+2) (Optional doc touch-up) In README’s “Run Tests” snippet, use:
+     ruff check .
+     black --check .
+     pytest
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+3) Commit to the same branch and let CI re-run. Report the latest CI result.
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff black pytest
-
-      - name: Lint with ruff
-        run: ruff check . --output-format=github
-
-      - name: Check formatting with black
-        run: black --check .
-
-      - name: Run tests
-        if: ${{ hashFiles('tests/**/*.py') != '' }}
-        run: pytest
+Return:
+- Files changed list
+- Confirmation that CI is green on PR #9
+- PR link
