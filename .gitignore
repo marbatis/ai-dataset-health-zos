@@ -35,6 +35,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+test-results.xml
 *.cover
 *.py,cover
 .hypothesis/
@@ -64,3 +65,4 @@ dmypy.json
 .DS_Store
 Thumbs.db
 .ruff_cache/
+

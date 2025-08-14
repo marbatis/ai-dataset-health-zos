@@ -21,6 +21,14 @@ python3 list_files.py /path/to/repository
 ./list_files.py
 ```
 
+### Run Tests
+
+```bash
+ruff .
+black --check .
+pytest
+```
+
 ## Files
 
 - `list_files.py` - Tool to list all files in the repository
