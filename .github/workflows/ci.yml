@@ -4,16 +4,19 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
           cache: 'pip'
           cache-dependency-path: |
             pyproject.toml
@@ -30,13 +33,13 @@ jobs:
       - name: Check formatting with black
         run: black --check .
 
-      - name: Run tests
+      - name: Run tests (if present)
         if: ${{ hashFiles('tests/**/*.py') != '' }}
         run: |
           pytest -q --junitxml=test-results.xml --cov=list_files --cov-report=term-missing
 
       - name: Upload pytest results
-        if: always() && ${{ hashFiles('tests/**/*.py') != '' }}
+        if: ${{ always() && hashFiles('tests/**/*.py') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
