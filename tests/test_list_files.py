@@ -23,4 +23,4 @@ def test_defaults_to_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     (tmp_path / "one").write_text("1")
     (tmp_path / "two").write_text("2")
     monkeypatch.chdir(tmp_path)
-    assert sorted(list_repository_files()) == ["one", "two"]
+    assert sorted(list_repository_files()) == ["one", "two"] 
