@@ -1,25 +1,26 @@
 from pathlib import Path
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from list_files import list_repository_files
-
-
+import pytest
 
 from list_files import list_repository_files
-def test_list_repository_files_excludes_git_and_is_sorted(tmp_path):
-    (tmp_path / "a.txt").write_text("A")
-    (tmp_path / "dir").mkdir()
-    (tmp_path / "dir" / "b.txt").write_text("B")
-    (tmp_path / ".git").mkdir()
-    (tmp_path / ".git" / "config").write_text("")
-
-    files = list_repository_files(tmp_path)
-
-    assert files == ["a.txt", "dir/b.txt"]
 
 
-def test_list_repository_files_defaults_to_current_directory(tmp_path, monkeypatch):
-    (tmp_path / "file.txt").write_text("")
-    monkeypatch.chdir(tmp_path)
-    assert list_repository_files() == ["file.txt"]
+@pytest.fixture
+def sample_repo(tmp_path: Path) -> Path:
+    # create repo contents
+    (tmp_path / ".git" / "objects").mkdir(parents=True)
+    (tmp_path / ".git" / "HEAD").write_text("ref: HEAD\n")
+    (tmp_path / "a").mkdir()
+    (tmp_path / "a" / "b.txt").write_text("b\n")
+    (tmp_path / "z.txt").write_text("z\n")
+    return tmp_path
+
+
+def test_lists_sorted_and_skips_git(sample_repo: Path) -> None:
+    files = list_repository_files(sample_repo)
+    assert files == ["a/b.txt", "z.txt"]
+
+
+def test_defaults_to_cwd(sample_repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(sample_repo)
+    files = list_repository_files()
+    assert files == ["a/b.txt", "z.txt"]
