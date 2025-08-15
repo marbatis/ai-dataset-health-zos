@@ -5,6 +5,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from list_files import list_repository_files
 
 
+
+from list_files import list_repository_files
 def test_list_repository_files_excludes_git_and_is_sorted(tmp_path):
     (tmp_path / "a.txt").write_text("A")
     (tmp_path / "dir").mkdir()
