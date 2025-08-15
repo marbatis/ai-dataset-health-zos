@@ -6,21 +6,21 @@ from list_files import list_repository_files
 
 @pytest.fixture
 def sample_repo(tmp_path: Path) -> Path:
-    # create repo contents
-    (tmp_path / ".git" / "objects").mkdir(parents=True)
-    (tmp_path / ".git" / "HEAD").write_text("ref: HEAD\n")
-    (tmp_path / "a").mkdir()
-    (tmp_path / "a" / "b.txt").write_text("b\n")
-    (tmp_path / "z.txt").write_text("z\n")
+    (tmp_path / "a.txt").write_text("a")
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".git" / "ignored.txt").write_text("x")
+    (tmp_path / "dir").mkdir()
+    (tmp_path / "dir" / "b.txt").write_text("b")
     return tmp_path
 
 
-def test_lists_sorted_and_skips_git(sample_repo: Path) -> None:
+def test_lists_sorted_relative_paths(sample_repo: Path) -> None:
     files = list_repository_files(sample_repo)
-    assert files == ["a/b.txt", "z.txt"]
+    assert files == ["a.txt", "dir/b.txt"]
 
 
-def test_defaults_to_cwd(sample_repo: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(sample_repo)
-    files = list_repository_files()
-    assert files == ["a/b.txt", "z.txt"]
+def test_defaults_to_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "one").write_text("1")
+    (tmp_path / "two").write_text("2")
+    monkeypatch.chdir(tmp_path)
+    assert sorted(list_repository_files()) == ["one", "two"]
