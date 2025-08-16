@@ -21,6 +21,25 @@ python3 list_files.py /path/to/repository
 ./list_files.py
 ```
 
+### Options
+
+```python
+from list_files import list_repository_files
+
+# Include only text files
+list_repository_files(include=['**/*.txt'])
+
+# Exclude test directories
+list_repository_files(exclude=['tests/**'])
+
+# Limit search depth
+list_repository_files(max_depth=1)
+
+# Include hidden files
+list_repository_files(include_hidden=True)
+```
+
+
 ## Files
 
 - `list_files.py` - Tool to list all files in the repository
