@@ -28,10 +28,18 @@ def list_repository_files(path: Path | None = None) -> list[str]:
 
 def main():
     """Main function to list repository files."""
+    repo_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    repo_path: Path | None = None
+    if repo_arg is not None:
+        try:
+            repo_path = Path(repo_arg)
+        except OSError as exc:
+            print(f"Invalid path {repo_arg!r}: {exc}", file=sys.stderr)
+            sys.exit(1)
+        if not repo_path.exists():
+            print(f"Path does not exist: {repo_arg}", file=sys.stderr)
+            sys.exit(1)
     try:
-        # Get repository path from command line or use current directory
-        repo_path = Path(sys.argv[1]) if len(sys.argv) > 1 else None
-
         target = repo_path or Path.cwd()
         print(f"Listing files in repository: {target.resolve()}")
         print("-" * 50)
