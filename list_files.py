@@ -89,7 +89,10 @@ def list_repository_files(
             if exclude_symlinks_outside_root and path.is_symlink():
                 try:
                     path.resolve().relative_to(root)
-                except ValueError:
+                    real_path = os.path.realpath(path)
+                    if not str(real_path).startswith(str(root)):
+                        continue
+                except Exception:
                     continue
             rel_path = path.relative_to(root).as_posix()
             if include and not _match_any(rel_path, include):
