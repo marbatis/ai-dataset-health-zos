@@ -1,51 +1,47 @@
 #!/usr/bin/env python3
-"""
-AI Dataset Health ZOS - File Listing Tool
+"""AI Dataset Health ZOS - File Listing Tool.
 
 This script lists files in the repository for the AI dataset health scoring tool
 for IBM z/OS via z/0SMF.
 """
 
-import os
-import sys
 from pathlib import Path
+import sys
 
 
-def list_repository_files(repo_path="."):
-    """
-    List all files in the repository.
+def list_repository_files(path: Path | None = None) -> list[str]:
+    """Return sorted relative file paths within *path*, ignoring ``.git``.
 
     Args:
-        repo_path (str): Path to the repository (default: current directory)
-
-    Returns:
-        list: List of file paths relative to the repository root
+        path: Repository root. Defaults to :func:`pathlib.Path.cwd`.
     """
-    repo_path = Path(repo_path).resolve()
-    files = []
+    if path is None:
+        path = Path.cwd()
 
-    # Walk through all files in the repository
-    for root, dirs, filenames in os.walk(repo_path):
-        # Skip .git directory
-        if ".git" in dirs:
-            dirs.remove(".git")
-
-        for filename in filenames:
-            file_path = Path(root) / filename
-            # Get path relative to repository root
-            relative_path = file_path.relative_to(repo_path)
-            files.append(str(relative_path))
+    files: list[str] = []
+    for p in path.rglob("*"):
+        if p.is_file() and ".git" not in p.parts:
+            files.append(str(p.relative_to(path)))
 
     return sorted(files)
 
 
 def main():
     """Main function to list repository files."""
+    repo_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    repo_path: Path | None = None
+    if repo_arg is not None:
+        repo_path = Path(repo_arg)
+        try:
+            if not repo_path.exists():
+                print(f"Path does not exist: {repo_arg}", file=sys.stderr)
+                sys.exit(1)
+        except OSError as exc:
+            print(f"Cannot access path {repo_arg!r}: {exc}", file=sys.stderr)
+            sys.exit(1)
     try:
-        # Get repository path from command line or use current directory
-        repo_path = sys.argv[1] if len(sys.argv) > 1 else "."
-
-        print(f"Listing files in repository: {Path(repo_path).resolve()}")
+        target = repo_path or Path.cwd()
+        print(f"Listing files in repository: {target.resolve()}")
         print("-" * 50)
 
         files = list_repository_files(repo_path)
