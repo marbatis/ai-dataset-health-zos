@@ -31,7 +31,7 @@ def list_repository_files(
         return []
 
     if max_depth is not None and max_depth < 0:
-        max_depth = None
+        raise ValueError("max_depth must be non-negative or None")
 
     base_exclude = [".git/**"]
     patterns_exclude = base_exclude + (exclude or [])
