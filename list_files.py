@@ -1,54 +1,112 @@
 #!/usr/bin/env python3
-"""
-AI Dataset Health ZOS - File Listing Tool
+"""AI Dataset Health ZOS - File Listing Tool.
 
 This script lists files in the repository for the AI dataset health scoring tool
 for IBM z/OS via z/0SMF.
 """
 
+from pathlib import Path, PurePosixPath
 import os
 import sys
-from pathlib import Path
 
 
-def list_repository_files(repo_path="."):
-    """
-    List all files in the repository.
+def list_repository_files(
+    repo_path: str | Path = ".",
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    max_depth: int | None = None,
+    include_hidden: bool = False,
+) -> list[str]:
+    """Return sorted relative file paths within ``repo_path``.
 
     Args:
-        repo_path (str): Path to the repository (default: current directory)
-
-    Returns:
-        list: List of file paths relative to the repository root
+        repo_path: Repository root. Defaults to current working directory.
+        include: Glob patterns to include. Keep files matching any pattern.
+        exclude: Glob patterns to exclude. ``".git/**"`` is always excluded.
+        max_depth: Maximum directory depth to traverse relative to ``repo_path``.
+        include_hidden: Include files and directories starting with ``.``.
     """
-    repo_path = Path(repo_path).resolve()
-    files = []
+    root = Path(repo_path).resolve()
+    if not root.exists():
+        return []
 
-    # Walk through all files in the repository
-    for root, dirs, filenames in os.walk(repo_path):
-        # Skip .git directory
-        if ".git" in dirs:
-            dirs.remove(".git")
+    if max_depth is not None and max_depth < 0:
+        max_depth = None
+
+    base_exclude = [".git/**"]
+    patterns_exclude = base_exclude + (exclude or [])
+
+    def _matches_pattern(
+        posix_path: PurePosixPath, rel_path: str, pattern: str
+    ) -> bool:
+        """Return True if ``pattern`` matches ``rel_path``."""
+        if pattern.endswith("/**"):
+            prefix = pattern[:-3]
+            if rel_path == prefix or rel_path.startswith(f"{prefix}/"):
+                return True
+        if posix_path.match(pattern):
+            return True
+        if pattern.startswith("**/") and posix_path.match(pattern[3:]):
+            return True
+        return False
+
+    def _match_any(rel_path: str, patterns: list[str]) -> bool:
+        posix_path = PurePosixPath(rel_path)
+        for pattern in patterns:
+            if _matches_pattern(posix_path, rel_path, pattern):
+                return True
+        return False
+
+    files: list[str] = []
+    root_depth = len(root.parts)
+    for dirpath, dirnames, filenames in os.walk(root):
+        current = Path(dirpath)
+        rel_depth = len(current.parts) - root_depth
+        if max_depth is not None and rel_depth >= max_depth:
+            dirnames[:] = []
+        if include_hidden:
+            dirnames[:] = [d for d in dirnames if d != ".git"]
+        else:
+            dirnames[:] = [d for d in dirnames if not d.startswith(".")]
 
         for filename in filenames:
-            file_path = Path(root) / filename
-            # Get path relative to repository root
-            relative_path = file_path.relative_to(repo_path)
-            files.append(str(relative_path))
+            if not include_hidden and filename.startswith("."):
+                continue
+            path = Path(dirpath, filename)
+            if path.is_symlink():
+                try:
+                    path.resolve().relative_to(root)
+                except ValueError:
+                    continue
+            rel_path = path.relative_to(root).as_posix()
+            if include and not _match_any(rel_path, include):
+                continue
+            if _match_any(rel_path, patterns_exclude):
+                continue
+            files.append(rel_path)
 
     return sorted(files)
 
 
 def main():
     """Main function to list repository files."""
+    repo_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    repo_path: Path | None = None
+    if repo_arg is not None:
+        repo_path = Path(repo_arg)
+        try:
+            if not repo_path.exists():
+                print(f"Path does not exist: {repo_arg}", file=sys.stderr)
+                sys.exit(1)
+        except OSError as exc:
+            print(f"Cannot access path {repo_arg!r}: {exc}", file=sys.stderr)
+            sys.exit(1)
     try:
-        # Get repository path from command line or use current directory
-        repo_path = sys.argv[1] if len(sys.argv) > 1 else "."
-
-        print(f"Listing files in repository: {Path(repo_path).resolve()}")
+        target = repo_path or Path.cwd()
+        print(f"Listing files in repository: {target.resolve()}")
         print("-" * 50)
 
-        files = list_repository_files(repo_path)
+        files = list_repository_files(target)
 
         if files:
             for i, file_path in enumerate(files, 1):
