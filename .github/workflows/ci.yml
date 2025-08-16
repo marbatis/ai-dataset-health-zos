@@ -35,6 +35,8 @@ jobs:
 
       - name: Run tests (if present)
         if: ${{ hashFiles('tests/**/*.py') != '' }}
+        env:
+          PYTHONPATH: .
         run: |
           pytest -q --junitxml=test-results.xml --cov=list_files --cov-report=term-missing
 
