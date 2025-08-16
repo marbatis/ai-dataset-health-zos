@@ -43,7 +43,19 @@ def list_repository_files(
         if pattern.endswith("/**"):
             prefix = pattern[:-3]
             if rel_path == prefix or rel_path.startswith(prefix + "/"):
-                return True
+    def _matches_double_star_pattern(rel_path: str, pattern: str) -> bool:
+        """Return True if ``pattern`` ending with '/**' matches ``rel_path``."""
+        if pattern.endswith("/**"):
+            prefix = pattern[:-3]
+            return rel_path == prefix or rel_path.startswith(prefix + "/")
+        return False
+
+    def _matches_pattern(
+        posix_path: PurePosixPath, rel_path: str, pattern: str
+    ) -> bool:
+        """Return True if ``pattern`` matches ``rel_path``."""
+        if _matches_double_star_pattern(rel_path, pattern):
+            return True
         if posix_path.match(pattern):
             return True
         if pattern.startswith("**/") and posix_path.match(pattern[3:]):
