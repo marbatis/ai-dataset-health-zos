@@ -73,7 +73,8 @@ def list_repository_files(
             if not include_hidden and filename.startswith("."):
                 continue
             path = Path(dirpath, filename)
-            if path.is_symlink():
+            # Only check symlinks if exclude_symlinks_outside_root is True.
+            if exclude_symlinks_outside_root and path.is_symlink():
                 try:
                     path.resolve().relative_to(root)
                 except ValueError:
