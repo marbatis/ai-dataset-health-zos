@@ -73,6 +73,8 @@ def list_repository_files(
             if not include_hidden and filename.startswith("."):
                 continue
             path = Path(dirpath, filename)
+            # Skip symlinks that point outside the repository root.
+            # This prevents listing files outside the intended scope for security and correctness.
             if path.is_symlink():
                 try:
                     path.resolve().relative_to(root)
