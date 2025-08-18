@@ -95,9 +95,9 @@ def list_repository_files(
     return out
 
 
-def main():
+def main() -> None:
     """Main function to list repository files."""
-    repo_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    repo_arg: str | None = sys.argv[1] if len(sys.argv) > 1 else None
     repo_path: Path | None = None
     if repo_arg is not None:
         repo_path = Path(repo_arg)
@@ -113,7 +113,7 @@ def main():
         print(f"Listing files in repository: {target.resolve()}")
         print("-" * 50)
 
-        files = list_repository_files(repo_path)
+        files: list[str] = list_repository_files(repo_path or Path.cwd())
 
         if files:
             for i, file_path in enumerate(files, 1):
@@ -122,8 +122,8 @@ def main():
         else:
             print("No files found in the repository.")
 
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
 
