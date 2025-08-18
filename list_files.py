@@ -1,131 +1,112 @@
 #!/usr/bin/env python3
-"""AI Dataset Health ZOS - File Listing Tool.
+"""
+AI Dataset Health z/OS — repository file utilities and CLI.
 
-This script lists files in the repository for the AI dataset health scoring tool
-for IBM z/OS via z/0SMF.
+- list_repository_files(): list files (relative to repo root), skipping .git/
+- CLI: by default prints files; with --health prints an "empty-file" health score
 """
 
 from __future__ import annotations
 
+import argparse
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
+from typing import Iterable
 
 
-def list_repository_files(
-    repo_path: str | Path = ".",
-    include: list[str] | None = None,
-    exclude: list[str] | None = None,
-    max_depth: int | None = None,
-    include_hidden: bool = False,
-) -> list[str]:
-    """List files under `repo_path` as sorted, relative POSIX paths, with filtering.
-
-    - `include`: keep only paths matching ANY glob (Path.match on relative POSIX).
-    - `exclude`: drop paths matching ANY glob; wins over include.
-    - Always excludes .git/**.
-    - `max_depth`: 0 = only files at root; 1 = root and one level below; etc.
-    - `include_hidden`: if False, skip entries starting with '.' (files/dirs).
+def list_repository_files(repo_path: str | Path | None = None) -> list[str]:
     """
-    root = Path(repo_path).resolve()
-    if not root.exists():
-        return []
+    Return a sorted list of file paths (relative to repo root), skipping .git/.
 
-    # Normalize args
-    base_exclude = {".git/**"}
-    inc = [p for p in (include or []) if p] or None
-    exc = list(base_exclude | set(exclude or []))
-    depth_limit = None if (max_depth is None or max_depth < 0) else int(max_depth)
+    Args:
+        repo_path: Path to the repository root. If None, uses current working dir.
 
-    def is_hidden_part(p: Path) -> bool:
-        # Any component that starts with '.' means "hidden"
-        return any(part.startswith(".") for part in p.parts)
+    """
+    root = Path(repo_path) if repo_path is not None else Path.cwd()
+    root = root.resolve()
 
-    out: list[str] = []
-
-    # Use os.walk to prune traversal early (depth + excludes + hidden dirs)
+    files: list[str] = []
     for dirpath, dirnames, filenames in os.walk(root):
-        dir_path = Path(dirpath)
-        rel_dir = dir_path.relative_to(root)
+        # Skip .git directory in-place so os.walk doesn't descend into it
+        if ".git" in dirnames:
+            dirnames.remove(".git")
 
-        # Prune hidden dirs if include_hidden is False
-        if not include_hidden:
-            dirnames[:] = [d for d in dirnames if not d.startswith(".")]
+        for fname in filenames:
+            rel = str((Path(dirpath) / fname).relative_to(root))
+            files.append(rel)
 
-        # Prune by depth
-        if depth_limit is not None:
-            current_depth = len(rel_dir.parts)  # 0 at root
-            # If we're already deeper than depth_limit, stop descending
-            if current_depth >= depth_limit:
-                dirnames[:] = []
-
-        # Prune excludes on directories (avoid descending into excluded trees)
-        # Apply patterns on POSIX rel path with a trailing slash for dirs
-        pruned = []
-        for d in dirnames:
-            rel_d = (rel_dir / d).as_posix()
-            # if excluded by any pattern like "dir/**", skip entering it
-            if any(
-                Path(rel_d).match(p.rstrip("/")) or Path(rel_d + "/").match(p)
-                for p in exc
-            ):
-                continue
-            pruned.append(d)
-        dirnames[:] = pruned
-
-        # Files in this directory
-        for fn in filenames:
-            file_path = dir_path / fn
-            rel = file_path.relative_to(root).as_posix()
-
-            if not include_hidden and is_hidden_part(Path(rel)):
-                continue
-
-            # include filter (if provided)
-            if inc is not None and not any(Path(rel).match(p) for p in inc):
-                continue
-
-            # exclude filter (wins)
-            if any(Path(rel).match(p) for p in exc):
-                continue
-
-            out.append(rel)
-
-    out.sort()
-    return out
+    return sorted(files)
 
 
-def main():
-    """Main function to list repository files."""
-    repo_arg = sys.argv[1] if len(sys.argv) > 1 else None
-    repo_path: Path | None = None
-    if repo_arg is not None:
-        repo_path = Path(repo_arg)
+def compute_health(files: Iterable[str], root: Path) -> tuple[float, int, int]:
+    """
+    Compute a simple health score based on the proportion of non-empty files.
+
+    Returns:
+        (score_percent, empty_file_count, total_file_count)
+    """
+    file_list = list(files)
+    total = len(file_list)
+    if total == 0:
+        return (100.0, 0, 0)
+
+    empty = 0
+    for rel in file_list:
         try:
-            if not repo_path.exists():
-                print(f"Path does not exist: {repo_arg}", file=sys.stderr)
-                sys.exit(1)
-        except OSError as exc:
-            print(f"Cannot access path {repo_arg!r}: {exc}", file=sys.stderr)
-            sys.exit(1)
-    try:
-        target = repo_path or Path.cwd()
-        print(f"Listing files in repository: {target.resolve()}")
-        print("-" * 50)
+            if (root / rel).stat().st_size == 0:
+                empty += 1
+        except FileNotFoundError:
+            # If a file disappears between listing and stat, treat as empty
+            empty += 1
 
-        files = list_repository_files(repo_path)
+    score = (total - empty) / total * 100.0
+    return (score, empty, total)
 
-        if files:
-            for i, file_path in enumerate(files, 1):
-                print(f"{i:2}. {file_path}")
-            print(f"\nTotal files: {len(files)}")
-        else:
-            print("No files found in the repository.")
 
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="List repository files (skips .git); optionally report health."
+    )
+    parser.add_argument(
+        "path",
+        nargs="?",
+        default=None,
+        help="Repository root to scan (defaults to current working directory).",
+    )
+    parser.add_argument(
+        "--health",
+        action="store_true",
+        help="Report health score (based on empty-file count) instead of listing.",
+    )
+
+    args = parser.parse_args(argv)
+
+    target: Path = (
+        Path(args.path).resolve() if args.path is not None else Path.cwd().resolve()
+    )
+
+    files: list[str] = list_repository_files(target)
+
+    if args.health:
+        score, empty, total = compute_health(files, target)
+        print(f"Health score: {score:.1f}%")
+        print(f"Zero-byte files: {empty}")
+        print(f"Total files: {total}")
+        return 0
+
+    # Default: print listing
+    print(f"Listing files in repository: {target}")
+    print("-" * 50)
+    for i, rel in enumerate(files, start=1):
+        print(f"{i:2}. {rel}")
+    print(f"\nTotal files: {len(files)}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        raise SystemExit(main())
+    except Exception as exc:  # noqa: BLE001 - keep CLI robust
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1)
