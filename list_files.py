@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import sys
 
+from health import compute_health
+
 
 def list_repository_files(
     repo_path: str | Path = ".",
@@ -95,9 +97,19 @@ def list_repository_files(
     return out
 
 
-def main():
-    """Main function to list repository files."""
-    repo_arg = sys.argv[1] if len(sys.argv) > 1 else None
+def main() -> None:
+    """List repository files or compute basic health metrics."""
+    args = sys.argv[1:]
+    health_flag = False
+    repo_arg: str | None = None
+
+    if args and args[0] == "--health":
+        health_flag = True
+        args = args[1:]
+
+    if args:
+        repo_arg = args[0]
+
     repo_path: Path | None = None
     if repo_arg is not None:
         repo_path = Path(repo_arg)
@@ -108,12 +120,22 @@ def main():
         except OSError as exc:
             print(f"Cannot access path {repo_arg!r}: {exc}", file=sys.stderr)
             sys.exit(1)
+
     try:
-        target = repo_path or Path.cwd()
-        print(f"Listing files in repository: {target.resolve()}")
+        target = (repo_path or Path.cwd()).resolve()
+        if health_flag:
+            report = compute_health(target)
+            print(f"Health score: {report.score}")
+            print(f"Zero-byte files ({len(report.zero_byte_files)}):")
+            for name in report.zero_byte_files:
+                print(f"  - {name}")
+            print(f"Total files scanned: {report.total_files}")
+            return
+
+        print(f"Listing files in repository: {target}")
         print("-" * 50)
 
-        files = list_repository_files(repo_path)
+        files: list[str] = list_repository_files(repo_path or Path.cwd())
 
         if files:
             for i, file_path in enumerate(files, 1):
@@ -122,8 +144,8 @@ def main():
         else:
             print("No files found in the repository.")
 
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
 
