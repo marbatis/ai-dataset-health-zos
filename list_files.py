@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.health:
         report: HealthReport = compute_health(target)
-        score = 100.0 if report.total_files == 0 else float(report.score)
+        score = float(report.score)
         print(f"Health score: {score:.1f}%")
         print(f"Zero-byte files: {len(report.zero_byte_files)}")
         print(f"Total files: {report.total_files}")
