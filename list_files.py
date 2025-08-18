@@ -63,7 +63,6 @@ def compute_health(files: Iterable[str], root: Path) -> tuple[float, int, int]:
     score = (total - empty) / total * 100.0
     return (score, empty, total)
 
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="List repository files (skips .git); optionally report health."
