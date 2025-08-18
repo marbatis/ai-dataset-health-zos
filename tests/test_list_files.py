@@ -1,7 +1,8 @@
 from pathlib import Path
+
 import pytest
 
-from list_files import list_repository_files
+from list_files import list_repository_files, main
 
 
 @pytest.fixture
@@ -23,4 +24,16 @@ def test_defaults_to_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     (tmp_path / "one").write_text("1")
     (tmp_path / "two").write_text("2")
     monkeypatch.chdir(tmp_path)
-    assert sorted(list_repository_files()) == ["one", "two"]
+    assert list_repository_files() == ["one", "two"]
+
+
+def test_nonexistent_repo_returns_empty(tmp_path: Path) -> None:
+    missing = tmp_path / "missing"
+    assert list_repository_files(missing) == []
+
+
+def test_main_success(sample_repo: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    main([str(sample_repo)])
+    out = capsys.readouterr().out
+    assert "Listing files in repository" in out
+    assert "Total files: 2" in out
