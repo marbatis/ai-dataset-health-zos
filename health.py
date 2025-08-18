@@ -46,6 +46,6 @@ def compute_health(root: Path) -> HealthReport:
     zero_byte_files.sort()
     total_files = len(files)
     score = (
-        0 if total_files == 0 else 100 - round(100 * len(zero_byte_files) / total_files)
+        0 if total_files == 0 else max(0, 100 - round(100 * len(zero_byte_files) / total_files))
     )
     return HealthReport(total_files, zero_byte_files, score)
