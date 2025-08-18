@@ -30,7 +30,14 @@ def compute_health(root: Path) -> HealthReport:
             files.append(rel)
 
     files.sort()
-    zero_byte_files = [p for p in files if (root / p).stat().st_size == 0]
+    zero_byte_files = []
+    for p in files:
+        try:
+            if (root / p).stat().st_size == 0:
+                zero_byte_files.append(p)
+        except FileNotFoundError:
+            # File was deleted between os.walk and stat; skip it
+            continue
     total_files = len(files)
     score = (
         0 if total_files == 0 else 100 - round(100 * len(zero_byte_files) / total_files)
