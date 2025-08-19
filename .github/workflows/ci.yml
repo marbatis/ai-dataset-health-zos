@@ -22,29 +22,42 @@ jobs:
             pyproject.toml
             requirements*.txt
 
-      - name: Install dependencies
+      - name: Install tools
         run: |
           python -m pip install --upgrade pip
-          pip install ruff black pytest pytest-cov mypy
+          pip install ruff black mypy pytest pytest-cov
 
-      - name: Lint with ruff
+      - name: Ruff check
         run: ruff check . --output-format=github
 
-      - name: Check formatting with black
+      - name: Black check
         run: black --check .
 
-      - name: Run mypy
+      - name: Mypy
         run: mypy .
 
-      - name: Run tests (if present)
-        if: ${{ hashFiles('tests/**/*.py') != '' }}
+      - name: Pytest (coverage ≥80)
         env:
           PYTHONPATH: .
         run: |
-          pytest -q --junitxml=test-results.xml --cov=./ --cov-report=term-missing --cov-fail-under=80
+          pytest -q --junitxml=test-results.xml \
+            --cov=./ --cov-report=term-missing --cov-fail-under=80
+
+      - name: Health (smoke)
+        env:
+          PYTHONPATH: .
+        run: |
+          python list_files.py --health . | tee health.txt
+
+      - name: Upload health output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-output
+          path: health.txt
 
       - name: Upload pytest results
-        if: ${{ always() && hashFiles('tests/**/*.py') != '' }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
