@@ -50,7 +50,7 @@ jobs:
           name: pytest-results
           path: test-results.xml
 
-      # ---- Task 3: smoke step (non-blocking) ----
+      # Smoke step: non-blocking
       - name: Health (smoke)
         env:
           PYTHONPATH: .

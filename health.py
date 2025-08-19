@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -16,28 +17,33 @@ class HealthReport:
 
 def compute_health(root: Path) -> HealthReport:
     """
-    Compute a simple empty-file based health score for the given root.
+    Empty-file based health score for a repository root.
 
-    - total_files counts all regular files under root, excluding anything in .git/
-    - zero_byte_files lists relative POSIX paths whose size is 0
-    - score = 0 if total_files == 0 else 100 - round(100 * len(zero_byte_files) / total_files)
+    Scans all regular files under `root`, skipping any directory named '.git'.
+    Score = 0 if no files, else 100 - round(100 * zero_count / total).
     """
+    root = root.resolve()
     zero_byte_files: list[str] = []
     total_files = 0
 
-    for p in root.rglob("*"):
-        if p.is_dir():
-            continue
-        # Exclude files under .git/
-        if any(part == ".git" for part in p.parts):
-            continue
+    for dirpath, dirnames, filenames in os.walk(root):
+        # prune .git at traversal level (exact match)
+        if ".git" in dirnames:
+            dirnames.remove(".git")
 
-        total_files += 1
-        try:
-            if p.stat().st_size == 0:
-                zero_byte_files.append(p.relative_to(root).as_posix())
-        except OSError as exc:  # pragma: no cover - unusual I/O errors
-            logger.warning("Could not stat file %s: %s", p.relative_to(root), exc)
+        for filename in filenames:
+            p = Path(dirpath) / filename
+            total_files += 1
+            try:
+                if p.stat().st_size == 0:
+                    zero_byte_files.append(p.relative_to(root).as_posix())
+            except OSError as exc:  # pragma: no cover — unusual I/O
+                # compute a safe relative string for logging
+                try:
+                    rel = p.relative_to(root).as_posix()
+                except Exception:
+                    rel = str(p)
+                logger.warning("Could not stat file %s: %s", rel, exc)
 
     zero_byte_files.sort()
     score = (
