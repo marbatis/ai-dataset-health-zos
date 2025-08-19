@@ -6,6 +6,16 @@ AI dataset health scoring for IBM z/OS via z/0SMF (Db2-free). ONNX inference run
 
 - **File Listing**: List all files in the repository for analysis and inventory
 
+### Quick start
+
+```bash
+# list files
+python list_files.py .
+
+# run health report (empty-file score)
+python list_files.py --health .
+```
+
 ## Usage
 
 ### List Repository Files
