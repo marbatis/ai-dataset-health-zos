@@ -43,9 +43,19 @@ jobs:
           pytest -q --junitxml=test-results.xml \
             --cov=./ --cov-report=term-missing --cov-fail-under=80
 
+      - name: Health smoke
+        run: python list_files.py --health . > health.txt
+
       - name: Upload pytest results
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
           path: test-results.xml
+
+      - name: Upload health results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-output
+          path: health.txt
