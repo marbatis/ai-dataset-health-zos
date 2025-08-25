@@ -44,7 +44,7 @@ except Exception:
 
 def compute_health_dispatch(root: Path) -> HealthReport:
     if _compute_health is not None:
-        return _compute_health(root)  # type: ignore[misc]
+        return _compute_health(root)  # type: ignore[return-value]
     return _compute_health_fallback(root)
 
 

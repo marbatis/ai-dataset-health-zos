@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 
-def test_cli_health_flag_works():
+def test_cli_health_flag_works() -> None:
     """Test that the CLI health flag actually works."""
     result = subprocess.run(
         [sys.executable, "-m", "ai_dataset_health_zos.cli", "--health", "."],
@@ -19,7 +19,7 @@ def test_cli_health_flag_works():
     assert "Total files:" in result.stdout
 
 
-def test_cli_without_health_shows_help():
+def test_cli_without_health_shows_help() -> None:
     """Test that CLI without --health flag shows help."""
     result = subprocess.run(
         [sys.executable, "-m", "ai_dataset_health_zos.cli", "."],
@@ -33,7 +33,7 @@ def test_cli_without_health_shows_help():
     assert "usage:" in result.stdout.lower() or "AI Dataset Health" in result.stdout
 
 
-def test_cli_nonexistent_path():
+def test_cli_nonexistent_path() -> None:
     """Test CLI with non-existent path returns error."""
     result = subprocess.run(
         [
