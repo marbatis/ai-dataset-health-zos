@@ -1,7 +1,6 @@
 from pathlib import Path
 import subprocess
 import sys
-import pytest
 
 
 def test_cli_health_flag_works():
