@@ -45,9 +45,9 @@ jobs:
 
       - name: Health (smoke)
         env:
-          PYTHONPATH: .
+          PYTHONPATH: src:.
         run: |
-          python list_files.py . --health | tee health.txt
+          python -m ai_dataset_health_zos.cli --health . | tee health.txt
 
       - name: Upload pytest results
         if: ${{ always() }}

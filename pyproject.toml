@@ -1,3 +1,14 @@
+[project]
+name = "ai-dataset-health-zos"
+version = "0.0.1"
+description = "AI Dataset Health for z/OS via z/OSMF"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+[project.scripts]
+ai-dataset-health-zos = "ai_dataset_health_zos.cli:main"
+
 [tool.black]
 line-length = 88
 target-version = ["py311"]
@@ -6,7 +17,7 @@ target-version = ["py311"]
 target-version = "py311"
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = [".", "src"]
 
 [tool.mypy]
 python_version = "3.13"

@@ -9,13 +9,30 @@ AI dataset health scoring for IBM z/OS via z/0SMF (Db2-free). ONNX inference run
 ## Quick start
 
 ```bash
-python list_files.py .
-python list_files.py --health .
+# Install the package in development mode
+pip install -e .
+
+# Run health check using the console script
+ai-dataset-health-zos --health .
+
+# Or run directly with Python module (development)
+PYTHONPATH=src python -m ai_dataset_health_zos.cli --health .
 ```
 
 ## Usage
 
-### List Repository Files
+### Health Analysis
+
+```bash
+# Using the installed console script
+ai-dataset-health-zos --health .
+ai-dataset-health-zos --health /path/to/repository
+
+# Development mode (without installation)
+PYTHONPATH=src python -m ai_dataset_health_zos.cli --health .
+```
+
+### List Repository Files (Legacy)
 
 ```bash
 # List files in current directory
