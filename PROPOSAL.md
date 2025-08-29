@@ -26,7 +26,7 @@ Repo: https://github.com/marbatis/ai-dataset-health-zos
 - 6–12 mo: dashboards; contributor docs
 
 ## License
-Current: MIT • Proposed for OMP: Apache-2.0 upon acceptance
+Apache-2.0
 
 ## Maintainers
 - **Marcelo Silveira** (@marbatis)

@@ -49,4 +49,8 @@ python3 list_files.py /path/to/repository
 
 - `list_files.py` - Tool to list all files in the repository
 - `README.md` - This documentation file  
-- `LICENSE` - MIT license file
+- `LICENSE` - Apache-2.0 license file
+
+## License
+
+License: Apache-2.0 (see LICENSE). Docs under CC BY 4.0.

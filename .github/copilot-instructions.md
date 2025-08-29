@@ -51,7 +51,7 @@ Always reference these instructions first and fallback to search or bash command
 ### Repository Structure
 ```
 .
-├── LICENSE              # MIT license
+├── LICENSE              # Apache-2.0 license
 ├── README.md           # Project documentation
 └── list_files.py       # File listing tool (main functionality)
 ```
