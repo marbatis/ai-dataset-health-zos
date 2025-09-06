@@ -2,3 +2,6 @@ ruff
 black
 pytest
 nbstripout
+# Additional dev tools
+pre-commit
+pytest-cov
