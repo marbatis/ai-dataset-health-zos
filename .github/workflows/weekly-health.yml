@@ -1,0 +1,44 @@
+name: Weekly health check
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'  # Mondays 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+      - name: Lint
+        run: ruff check .
+      - name: Format check
+        run: black --check .
+      - name: Tests
+        env:
+          PYTHONPATH: src
+        run: pytest -q
+      - name: Emit health artifact
+        run: |
+          mkdir -p artifacts
+          python - << 'PY'
+import platform, sys, time, json
+info = {
+  "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+  "python": sys.version.split()[0],
+  "platform": platform.platform(),
+}
+open("artifacts/health.json","w").write(json.dumps(info, indent=2))
+PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weekly-health
+          path: artifacts/health.json
