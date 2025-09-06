@@ -1,7 +1,7 @@
 import math
 import pytest
 
-from zexplorer.geoutils import bbox_from_center
+from ai_dataset_health_zos.geoutils import bbox_from_center
 
 def test_invalid_latitude_raises():
     with pytest.raises(ValueError):
@@ -21,4 +21,3 @@ def test_near_cap_is_finite():
     # Just under the cap; should produce finite results
     bbox = bbox_from_center(84.999, 10.0, 100_000.0)
     assert all(map(math.isfinite, bbox)), "bbox values should be finite"
-

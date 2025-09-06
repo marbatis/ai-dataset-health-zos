@@ -1,0 +1,3 @@
+# Additional dev tools
+pre-commit
+pytest-cov
