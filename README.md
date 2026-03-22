@@ -1,6 +1,11 @@
 # AI Dataset Health ZOS
 
-AI dataset health scoring for IBM z/OS via z/0SMF (Db2-free). ONNX inference runs on Linux on Z; writes PDSE/GDG reports.
+AI dataset health scoring for IBM Z / zOS telemetry with production-minded packaging and reporting.
+
+## Why this matters
+- Brings repeatable AI data-quality checks to IBM Z and z/OS-centric workflows.
+- Supports operational reporting patterns used in enterprise mainframe environments (for example PDSE/GDG outputs).
+- Keeps model inference and governance lightweight by using ONNX-based scoring and CLI automation.
 
 ## Features
 
