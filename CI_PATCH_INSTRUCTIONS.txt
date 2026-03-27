@@ -1,0 +1,11 @@
+# Apply this patch to make CI upload coverage (optional)
+# Insert after the 'Tests' step in .github/workflows/ci.yml:
+#
+#   - name: Coverage XML
+#     run: pytest -q --cov=src --cov-report=xml:coverage.xml
+#     env:
+#       PYTHONPATH: src
+#   - uses: actions/upload-artifact@v4
+#     with:
+#       name: coverage-xml
+#       path: coverage.xml

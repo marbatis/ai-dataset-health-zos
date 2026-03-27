@@ -1,0 +1,8 @@
+
+
+# ---- Pre-commit helpers ----
+precommit-install:
+	pre-commit install
+
+precommit-run:
+	pre-commit run --all-files
