@@ -1,0 +1,30 @@
+name: Temporary Whisper package
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download Whisper binary and model
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p package unpack
+          curl -L --fail --retry 3 -o whisper.tar.gz "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.1/whisper-bin-ubuntu-x64.tar.gz"
+          tar -xzf whisper.tar.gz -C unpack
+          find unpack -maxdepth 3 -type f -ls
+          cp $(find unpack -type f -name whisper-cli | head -1) package/
+          find unpack -type f -name '*.so*' -exec cp -P {} package/ \;
+          curl -L --fail --retry 3 -o package/ggml-base.en-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin?download=true"
+          chmod +x package/whisper-cli
+          ls -lh package
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-linux-package
+          path: package/
+          retention-days: 1
