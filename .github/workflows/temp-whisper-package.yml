@@ -1,0 +1,24 @@
+name: Temporary Whisper package
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download tiny English model
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p package
+          curl -L --fail --retry 3 -o package/ggml-tiny.en-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin?download=true"
+          ls -lh package
+      - name: Upload model
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-tiny-model
+          path: package/
+          retention-days: 1
