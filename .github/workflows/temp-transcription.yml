@@ -1,8 +1,8 @@
 name: Temporary audio transcription
 
 on:
-  push:
-    branches: [temp-audio-transcription-20260730]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
