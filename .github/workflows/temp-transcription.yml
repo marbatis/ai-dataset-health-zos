@@ -6,66 +6,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  transcribe:
+  package-whisper:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
-      - name: Install build tools and ffmpeg
+      - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential ffmpeg curl
+          sudo apt-get install -y cmake build-essential curl
 
-      - name: Build whisper.cpp
+      - name: Build whisper.cpp and download model
+        shell: bash
         run: |
+          set -euxo pipefail
           git clone --depth 1 https://github.com/ggml-org/whisper.cpp.git
           cmake -S whisper.cpp -B whisper.cpp/build -DCMAKE_BUILD_TYPE=Release
           cmake --build whisper.cpp/build --config Release -j2
+          mkdir -p package
+          cp whisper.cpp/build/bin/whisper-cli package/
+          cp whisper.cpp/build/src/libwhisper.so* package/ 2>/dev/null || true
+          cp whisper.cpp/build/ggml/src/libggml*.so* package/ 2>/dev/null || true
+          curl -L --fail --retry 3 -o package/ggml-base.en-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin?download=true"
+          chmod +x package/whisper-cli
+          ls -lh package
 
-      - name: Download model and audio chunks
-        shell: bash
-        run: |
-          set -euxo pipefail
-          mkdir -p audio wav output
-          curl -L --fail --retry 3 -o whisper.cpp/models/ggml-base.en-q5_1.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-q5_1.bin?download=true"
-          ids=(
-            1XZwuYbQjFhyBlDJlovFGWOsg5P_35iYS
-            11KwL0bTwa9tu9vXL6aTpeUB_ZKXa4tqE
-            1CDoaRhu5Z0gZNrdWqLuFUFxwnxy9Bgyz
-            1r-tkj53DDuuGZg4nVZh6fArFOPDZTAoM
-            13vOtkUJLUmkgE1djZR5DKD82bEWt9HTa
-            1xKaX8175amtjZzlIlSXAWks3_dtasr56
-          )
-          for i in "${!ids[@]}"; do
-            n=$(printf '%02d' "$i")
-            curl -L --fail --retry 3 -o "audio/chunk_${n}.opus" "https://drive.usercontent.google.com/download?id=${ids[$i]}&export=download&confirm=t"
-            file "audio/chunk_${n}.opus"
-            ffmpeg -y -v error -i "audio/chunk_${n}.opus" -ar 16000 -ac 1 -c:a pcm_s16le "wav/chunk_${n}.wav"
-          done
-          ls -lh wav whisper.cpp/models/ggml-base.en-q5_1.bin
-
-      - name: Transcribe audio
-        shell: bash
-        run: |
-          set -euxo pipefail
-          CLI=whisper.cpp/build/bin/whisper-cli
-          MODEL=whisper.cpp/models/ggml-base.en-q5_1.bin
-          for wav in wav/chunk_*.wav; do
-            name=$(basename "$wav" .wav)
-            "$CLI" -m "$MODEL" -f "$wav" -l en -otxt -osrt -of "output/$name" --no-prints &
-            while [ "$(jobs -rp | wc -l)" -ge 2 ]; do wait -n; done
-          done
-          wait
-          cat output/chunk_*.txt > output/transcript.txt
-          printf '\n' >> output/transcript.txt
-          wc -w output/transcript.txt
-          head -40 output/transcript.txt
-
-      - name: Upload transcript
+      - name: Upload whisper package
         uses: actions/upload-artifact@v4
         with:
-          name: speaksignal-transcript
-          path: |
-            output/transcript.txt
-            output/chunk_*.txt
-            output/chunk_*.srt
+          name: whisper-linux-package
+          path: package/
           retention-days: 1
