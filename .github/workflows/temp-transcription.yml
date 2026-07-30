@@ -37,7 +37,8 @@ jobs:
           )
           for i in "${!ids[@]}"; do
             n=$(printf '%02d' "$i")
-            curl -L --fail --retry 3 -o "audio/chunk_${n}.opus" "https://drive.google.com/uc?export=download&id=${ids[$i]}"
+            curl -L --fail --retry 3 -o "audio/chunk_${n}.opus" "https://drive.usercontent.google.com/download?id=${ids[$i]}&export=download&confirm=t"
+            file "audio/chunk_${n}.opus"
             ffmpeg -y -v error -i "audio/chunk_${n}.opus" -ar 16000 -ac 1 -c:a pcm_s16le "wav/chunk_${n}.wav"
           done
           ls -lh wav whisper.cpp/models/ggml-base.en-q5_1.bin
