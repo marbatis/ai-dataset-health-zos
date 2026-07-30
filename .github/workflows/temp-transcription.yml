@@ -1,0 +1,19 @@
+name: Temporary audio transcription
+
+on:
+  push:
+    branches: [temp-audio-transcription-20260730]
+  workflow_dispatch:
+
+jobs:
+  test-download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test audio download
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -L --fail --silent --show-error -o chunk.opus "https://drive.google.com/uc?export=download&id=1XZwuYbQjFhyBlDJlovFGWOsg5P_35iYS"
+          file chunk.opus
+          ls -lh chunk.opus
+          head -c 20 chunk.opus | xxd
